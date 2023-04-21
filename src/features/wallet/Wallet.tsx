@@ -13,6 +13,17 @@ function Wallet() {
   if (provider == null) {
     display = (
       <div>
+        {(status === WalletStatusEnums.WALLET_NOT_FOUND) &&
+          <Grid container>
+            <Alert severity="error">
+              <AlertTitle>Wallet Not Found</AlertTitle>
+              <p>
+                Please install and enable either the Argent X or Braavos wallet to use this app.
+              </p>
+            </Alert>
+          </Grid>
+        }
+
         <LoadingButton
           loading={status === WalletStatusEnums.LOADING}
           variant="contained"
@@ -49,17 +60,6 @@ function Wallet() {
             </li>
             <li>Starknet testnet network</li>
           </ol>
-        </Alert>
-      </Grid>
-    );
-  } else if (status === WalletStatusEnums.WALLET_NOT_FOUND) {
-    display = (
-      <Grid container>
-        <Alert severity="error">
-          <AlertTitle>Wallet Not Found</AlertTitle>
-          <p>
-            Please install and enable either the Argent X or Braavos wallet to use this app.
-          </p>
         </Alert>
       </Grid>
     );
