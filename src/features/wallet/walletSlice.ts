@@ -19,7 +19,7 @@ export const connectWallet = createAsyncThunk<void, void, AsyncThunkConfig>(
   'ConnectWallet',
   async (action, { dispatch }) => {
     await dispatch(initWeb3());
-    await dispatch(fetchAcct())
+    await dispatch(fetchAccount())
       .unwrap()
       .catch((error) => {
         throw error;
@@ -43,6 +43,15 @@ export const initWeb3 = createAsyncThunk<
     } else if (window.starknet_braavos?.version) {
       starknetWindowObject = window.starknet_braavos;
     }
+    //if starknetWindowObject is undefined, update status with WALLET_NOT_FOUND
+    if (!starknetWindowObject) {
+      console.log('No wallet found');
+      return {
+        provider: null,
+        status: WalletStatusEnums.WALLET_NOT_FOUND,
+      };
+    }
+
     starknetWindowObject = starknetWindowObject as any;
     console.log("version {}", starknetWindowObject.version);
 
@@ -59,7 +68,7 @@ export const initWeb3 = createAsyncThunk<
     starknetWindowObject.on('networkChanged', (chainId: string) => {
       console.log('Web3 chainChanged:');
       console.log(chainId);
-      dispatch(fetchAcct());
+      dispatch(fetchAccount());
     });
 
     // // Subscribe to session disconnection
@@ -80,14 +89,6 @@ export const initWeb3 = createAsyncThunk<
   }
 });
 
-export const fetchAcct = createAsyncThunk<
-  void,
-  void,
-  AsyncThunkConfig
->('ConnectWallet', async (action, { dispatch }) => {
-  await dispatch(fetchAccount());
-});
-
 export const fetchAccount = createAsyncThunk<
   {
     address: string;
@@ -98,6 +99,17 @@ export const fetchAccount = createAsyncThunk<
   AsyncThunkConfig
 >('FetchAccount', async (_, thunkAPI) => {
   try {
+    // log wallet status
+    console.log('wallet status:', WalletStatusEnums[thunkAPI.getState().wallet.status]);
+    // if status is WALLET_NOT_FOUND, return
+    if (thunkAPI.getState().wallet.status === WalletStatusEnums.WALLET_NOT_FOUND) {
+      return {
+        address: '',
+        // balance: BigNumber.from(0),
+        status: WalletStatusEnums.WALLET_NOT_FOUND,
+      };
+    }
+
     const provider = thunkAPI.getState().wallet.provider;
     console.log('Fetching account address');
 
@@ -144,6 +156,7 @@ export enum WalletStatusEnums {
   LOADING,
   CONNECTED,
   WRONG_NETWORK,
+  WALLET_NOT_FOUND,
 }
 
 export interface WalletState {
@@ -177,18 +190,13 @@ export const walletSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(initWeb3.fulfilled, (state, { payload }) => {
+        console.log('initWeb3 success' + payload.status);
         state.provider = payload.provider;
         state.status = payload.status;
       })
       .addCase(initWeb3.rejected, (state) => {
+        console.log('initWeb3 failed, setting to disconnected');
         state.status = WalletStatusEnums.DISCONNECTED;
-      })
-      .addCase(connectWallet.pending, (state) => {
-        state.status = WalletStatusEnums.LOADING;
-
-      })
-      .addCase(fetchAcct.rejected, (state) => {
-        state.status = WalletStatusEnums.WRONG_NETWORK;
       })
       .addCase(fetchAccount.fulfilled, (state, { payload }) => {
         state.address = payload.address;

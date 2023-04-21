@@ -56,3 +56,9 @@ npx create-react-app starknet-redux-typescript --template redux-typescript
 ```bash
 npm install starknet@next
 ```
+
+## Add MUI
+
+```bash
+npm install @mui/material @mui/lab @emotion/react @emotion/styled
+```

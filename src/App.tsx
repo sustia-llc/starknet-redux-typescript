@@ -1,65 +1,38 @@
 import React from 'react';
 import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
 import './App.css';
+import { ThemeProvider } from '@mui/material/styles';
 import {
-  disconnect,
-  selectWallet,
-  WalletStatusEnums,
-} from './features/wallet/walletSlice';
-import Wallet from './features/wallet/Wallet';
-
+  Container,
+  CssBaseline,
+  Grid,
+  Typography,
+} from '@mui/material';
+import { Wallet, Footer } from './features/wallet/Wallet';
+import theme from './styles/theme';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Wallet />
-        <Counter />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <span>
-          <span>Learn </span>
-          <a
-            className="App-link"
-            href="https://reactjs.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux
-          </a>
-          <span>, </span>
-          <a
-            className="App-link"
-            href="https://redux-toolkit.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Redux Toolkit
-          </a>
-          ,<span> and </span>
-          <a
-            className="App-link"
-            href="https://react-redux.js.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            React Redux
-          </a>
-        </span>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+      <CssBaseline />
+      <Container maxWidth="sm">
+        <Grid container rowSpacing={5}>
+          <Grid item xs={12}>
+            <img src={logo} className="App-logo" alt="logo" />
+            <Typography variant="h4" component="h1" gutterBottom>
+              Starknet PoC
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Wallet />
+          </Grid>
+          <Grid item xs={12}>
+            <Footer />
+          </Grid>
+        </Grid>
+      </Container>
+    </ThemeProvider>
   );
 }
 
