@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { Wallet, Footer } from './features/wallet/Wallet';
 import theme from './styles/theme';
+import { Counter } from './features/counter/Counter';
 
 function App() {
   return (
@@ -26,6 +27,9 @@ function App() {
           </Grid>
           <Grid item xs={12}>
             <Wallet />
+          </Grid>
+          <Grid item xs={12}>
+            <Counter />
           </Grid>
           <Grid item xs={12}>
             <Footer />

@@ -7,6 +7,7 @@ import {
 } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
 import { Account, constants, Provider } from 'starknet';
+import { fetchBalance } from '../counter/counterSlice';
 
 type AsyncThunkConfig = {
   state: RootState;
@@ -24,6 +25,7 @@ export const connectWallet = createAsyncThunk<void, void, AsyncThunkConfig>(
       .catch((error) => {
         throw error;
     });
+    await dispatch(fetchBalance());
   }
 );
 

@@ -1,18 +1,29 @@
-# Getting Started with Create React App
+# React App with Starknet Cairo1
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) TS template.
+## Installation and Setup
 
-## Available Scripts
+## Clone Cairo1 Hardhat Project
 
-In the project directory, you can run:
+```bash
+git clone https://github.com/sustia-llc/cairo1-hardhat.git
+```
+
+Follow the instructions in the README.md file to compile the Cairo1 contract, start the devnet with docker, and run the test to deploy the contract.
+
+## Run the app
 
 ### `npm start`
 
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Install Argent X or Braavos Wallet
+
+Install the Argent X or Braavos Wallet as an extension in your browser. Switch to the Localhost 5050 network. Create a new "standard account".
+
+## Interact with the App
+
+Click the "connect" button and allow the app to connect to http://localhost:3000
 
 ### `npm test`
 
@@ -62,3 +73,7 @@ npm install starknet@next
 ```bash
 npm install @mui/material @mui/lab @emotion/react @emotion/styled
 ```
+
+##
+
+TODO Link to USECASES.md
