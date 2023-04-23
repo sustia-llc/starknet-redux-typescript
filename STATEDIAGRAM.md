@@ -1,0 +1,37 @@
+stateDiagram-v2
+    state WALLET_DISCONNECTED
+    state WALLET_LOADING
+    state WALLET_DAPP_PENDING_APPROVAL
+    state WALLET_DAPP_NOT_APPROVED
+    state WALLET_CONNECTED
+    state WALLET_WRONG_NETWORK
+    state WALLET_NOT_FOUND
+    state DATA_LOADING
+    state DATA_LOADED
+    state DATA_LOAD_FAILED
+    state TX_PENDING_APPROVAL
+    state TX_REJECTED
+    state TX_PENDING
+    state TX_FAILED
+    state TX_SUCCESSFUL
+
+    WALLET_DISCONNECTED --> WALLET_LOADING: Connect Wallet
+    WALLET_LOADING --> WALLET_DAPP_PENDING_APPROVAL: Wallet Found
+    WALLET_DAPP_PENDING_APPROVAL --> WALLET_CONNECTED: Wallet Connection Approved
+    WALLET_DAPP_PENDING_APPROVAL --> WALLET_DAPP_NOT_APPROVED: Wallet Connection Rejected
+    WALLET_LOADING --> WALLET_WRONG_NETWORK: Wrong Network Detected
+    WALLET_LOADING --> WALLET_NOT_FOUND: No Wallet Detected
+
+    WALLET_CONNECTED --> DATA_LOADING: Initialize dApp
+    DATA_LOADING --> DATA_LOADED: Data Load Successful
+    DATA_LOADING --> DATA_LOAD_FAILED: Data Load Failed
+    DATA_LOADED --> WALLET_DAPP_PENDING_APPROVAL: Switch Account
+    DATA_LOADED --> TX_PENDING_APPROVAL: Initiate Transaction
+    TX_PENDING_APPROVAL --> TX_REJECTED: Rejected Transaction
+    TX_PENDING_APPROVAL --> TX_PENDING: Approved Transaction
+    TX_PENDING --> TX_SUCCESSFUL: Transaction Successful
+    TX_PENDING --> TX_FAILED: Transaction Failed
+    TX_FAILED --> DATA_LOADING: Reload Data
+
+    WALLET_CONNECTED --> WALLET_DISCONNECTED: Disconnect Wallet
+    WALLET_NOT_FOUND --> WALLET_DISCONNECTED: Notify Install/Enable Wallet
