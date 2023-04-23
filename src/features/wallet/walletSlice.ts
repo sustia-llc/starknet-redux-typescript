@@ -6,8 +6,17 @@ import {
   PayloadAction,
 } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
-import { Account, constants, Provider } from 'starknet';
 import { fetchBalance } from '../counter/counterSlice';
+
+export enum WalletStatusEnums {
+  DISCONNECTED,
+  LOADING,
+  DAPP_PENDING_APPROVAL,
+  DAPP_NOT_APPROVED,
+  CONNECTED,
+  WRONG_NETWORK,
+  NOT_FOUND,
+}
 
 type AsyncThunkConfig = {
   state: RootState;
@@ -16,10 +25,10 @@ type AsyncThunkConfig = {
   rejectValue?: unknown;
 };
 
-export const connectWallet = createAsyncThunk<void, void, AsyncThunkConfig>(
-  'ConnectWallet',
+export const connect = createAsyncThunk<void, void, AsyncThunkConfig>(
+  'Connect',
   async (action, { dispatch }) => {
-    await dispatch(initWeb3());
+    await dispatch(connectWallet());
     await dispatch(fetchAccount())
       .unwrap()
       .catch((error) => {
@@ -29,113 +38,142 @@ export const connectWallet = createAsyncThunk<void, void, AsyncThunkConfig>(
   }
 );
 
-export const initWeb3 = createAsyncThunk<
+export const connectWallet = createAsyncThunk<
   {
     provider: any;
     status: WalletStatusEnums;
   },
   void,
   AsyncThunkConfig
->('InitWeb3', async (action, { dispatch }) => {
+>('connectWallet', async (action, { dispatch }) => {
 
+  let starknetWindowObject = undefined;
+  if (window.starknet_argentX?.version) {
+    starknetWindowObject = window.starknet_argentX;
+  } else if (window.starknet_braavos?.version) {
+    starknetWindowObject = window.starknet_braavos;
+  }
+
+  if (!starknetWindowObject) {
+    console.log('No wallet found');
+    return {
+      provider: null,
+      status: WalletStatusEnums.NOT_FOUND,
+    };
+  }
+
+  starknetWindowObject = starknetWindowObject as any;
+  console.log("starknetWindowObject", starknetWindowObject);
+
+  console.log("requesting access to wallet");
   try {
-    let starknetWindowObject = undefined;
-    if (window.starknet_argentX?.version) {
-      starknetWindowObject = window.starknet_argentX;
-    } else if (window.starknet_braavos?.version) {
-      starknetWindowObject = window.starknet_braavos;
-    }
-    //if starknetWindowObject is undefined, update status with WALLET_NOT_FOUND
-    if (!starknetWindowObject) {
-      console.log('No wallet found');
+    await starknetWindowObject?.enable();
+  } catch (error) {
+    if (error === "Error: User aborted") {
+      console.log('User aborted');
       return {
         provider: null,
-        status: WalletStatusEnums.WALLET_NOT_FOUND,
+        status: WalletStatusEnums.DAPP_NOT_APPROVED,
       };
     }
+    console.log('Wallet enable failed: ', error);
+    throw error;
+  }
+  console.log("access granted");
+  const provider = starknetWindowObject?.provider;
+  console.log("provider {}", provider);
 
-    starknetWindowObject = starknetWindowObject as any;
-    console.log("version {}", starknetWindowObject.version);
+  const account = starknetWindowObject?.account;
+  console.log("account {}", account);
 
-    await starknetWindowObject?.enable();
-    const provider = starknetWindowObject?.account;
-    console.log("provider {}", provider);
+  // Subscribe to accounts change
+  starknetWindowObject.on('accountsChanged', (accounts: string[]) => {
+    console.log('accounts changed:');
+    console.log(accounts);
+  });
 
-    // Subscribe to accounts change
-    starknetWindowObject.on('accountsChanged', (accounts: string[]) => {
-      console.log(accounts);
-    });
-
-    // Subscribe to chainId change
-    starknetWindowObject.on('networkChanged', (chainId: string) => {
+  // Subscribe to chainId change, including locked wallet
+  starknetWindowObject.on('networkChanged', (chainId: string) => {
+    if (!chainId) {
+      console.log('Wallet disconnected');
+      dispatch(disconnect());
+    } else {
       console.log('Web3 chainChanged:');
       console.log(chainId);
       dispatch(fetchAccount());
-    });
+    }
+  });
 
-    // // Subscribe to session disconnection
-    // starknetWindowObject.on('disconnect', (code: number, reason: string) => {
-    //   console.log('Web3 disconnect:');
-    //   console.log(code, reason);
-    // });
-    console.log(provider);
-    console.log('Connected to wallet');
+  console.log(provider);
+  console.log('Connected to wallet');
 
-    return {
-      provider,
-      status: WalletStatusEnums.LOADING,
-    };
-  } catch (error) {
-    console.log('Error initializing web3', error);
-    throw error;
-  }
+  return {
+    provider,
+    status: WalletStatusEnums.LOADING,
+  };
+
 });
 
 export const fetchAccount = createAsyncThunk<
   {
     address: string;
+    chainId: string;
     // balance: BigNumber;
     status: WalletStatusEnums;
   },
   void,
   AsyncThunkConfig
 >('FetchAccount', async (_, thunkAPI) => {
-  try {
-    // log wallet status
-    console.log('wallet status:', WalletStatusEnums[thunkAPI.getState().wallet.status]);
-    // if status is WALLET_NOT_FOUND, return
-    if (thunkAPI.getState().wallet.status === WalletStatusEnums.WALLET_NOT_FOUND) {
-      return {
-        address: '',
-        // balance: BigNumber.from(0),
-        status: WalletStatusEnums.WALLET_NOT_FOUND,
-      };
-    }
-
-    const provider = thunkAPI.getState().wallet.provider;
-    console.log('Fetching account address');
-
-    if (!provider) {
-      throw new Error('provider not initialized');
-    }
-    
-    const signer = provider.signer;
-    console.log(signer);
-    const address = provider.address;
-    console.log('Fetched account:', address);
-    if (!address) throw 'Account disconnected';
-    // const balance = await provider.signer.get .getBalance(address);
-    // console.log('balance:', balance);
-
+  const wallet_status = thunkAPI.getState().wallet.status;
+  console.log('wallet status:', WalletStatusEnums[wallet_status]);
+  if (
+    wallet_status === WalletStatusEnums.DAPP_NOT_APPROVED ||
+    wallet_status === WalletStatusEnums.NOT_FOUND ||
+    wallet_status === WalletStatusEnums.DISCONNECTED
+  ) {
     return {
-      address,
-      // balance: balance,
-      status: WalletStatusEnums.CONNECTED,
+      address: '',
+      chainId: '',
+      // balance: BigNumber.from(0),
+      status: wallet_status,
     };
-  } catch (error) {
-    console.log('Error fetching account address', error);
-    throw error;
   }
+
+  let starknetWindowObject = undefined;
+  if (window.starknet_argentX?.version) {
+    starknetWindowObject = window.starknet_argentX;
+  } else if (window.starknet_braavos?.version) {
+    starknetWindowObject = window.starknet_braavos;
+  }
+
+  starknetWindowObject = starknetWindowObject as any;
+  console.log("starknetWindowObject {}", starknetWindowObject);
+  console.log('Fetching account address');
+
+  if (!starknetWindowObject) {
+    throw new Error('starknetWindowObject not initialized');
+  }
+
+  const account = starknetWindowObject?.account;
+  console.log("account {}", account);
+
+  const address = account.address;
+  console.log('Fetched account:', address);
+  if (!address) {
+    throw new Error('Address not found');
+  } 
+
+  // const balance = await starknetWindowObject?.getBalance();
+
+  const chainId = starknetWindowObject?.chainId;
+  console.log("chainId {}", chainId);
+
+  return {
+    address,
+    chainId,
+    // balance: balance,
+    status: WalletStatusEnums.CONNECTED,
+  };
 });
 
 export const disconnect = createAsyncThunk<
@@ -144,7 +182,6 @@ export const disconnect = createAsyncThunk<
   AsyncThunkConfig
 >('Disconnect', async (_, thunkAPI) => {
   console.log('disconnecting');
-  window.location.reload();
 
   return {
     provider: null,
@@ -153,28 +190,20 @@ export const disconnect = createAsyncThunk<
   };
 });
 
-export enum WalletStatusEnums {
-  DISCONNECTED,
-  LOADING,
-  CONNECTED,
-  WRONG_NETWORK,
-  WALLET_NOT_FOUND,
-}
-
 export interface WalletState {
   provider: any;
   address: string;
+  chainId: string;
   // balance: BigNumber | null;
   status: WalletStatusEnums;
-  blockNumber: number | null;
 }
 
 export const initialState: WalletState = {
   provider: null,
   address: '',
+  chainId: '',
   // balance: null,
   status: WalletStatusEnums.DISCONNECTED,
-  blockNumber: null
 };
 
 export const walletSlice = createSlice({
@@ -191,19 +220,28 @@ export const walletSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(initWeb3.fulfilled, (state, { payload }) => {
-        console.log('initWeb3 success' + payload.status);
+      .addCase(connectWallet.pending, (state) => {
+        console.log('attempting to connect wallet');
+        state.status = WalletStatusEnums.LOADING;
+      })
+      .addCase(connectWallet.fulfilled, (state, { payload }) => {
+        console.log('wallet connect success' + payload.status);
         state.provider = payload.provider;
         state.status = payload.status;
       })
-      .addCase(initWeb3.rejected, (state) => {
-        console.log('initWeb3 failed, setting to disconnected');
+      .addCase(connectWallet.rejected, (state) => {
+        console.log('provider connect failed, setting to disconnected');
         state.status = WalletStatusEnums.DISCONNECTED;
       })
       .addCase(fetchAccount.fulfilled, (state, { payload }) => {
         state.address = payload.address;
+        state.chainId = payload.chainId;
         // state.balance = payload.balance;
         state.status = payload.status;
+      })
+      .addCase(fetchAccount.rejected, (state, { payload }) => {
+        console.log('fetch account failed, setting to disconnected');
+        state.status = WalletStatusEnums.DISCONNECTED;
       })
       .addCase(disconnect.rejected, (state) => {
         console.log('disconnect failed');

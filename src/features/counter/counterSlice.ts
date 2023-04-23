@@ -1,5 +1,5 @@
-import { AnyAction, createAsyncThunk, createSlice, Dispatch, PayloadAction } from '@reduxjs/toolkit';
-import { RootState, AppThunk } from '../../app/store';
+import { AnyAction, createAsyncThunk, createSlice, Dispatch } from '@reduxjs/toolkit';
+import { RootState } from '../../app/store';
 import { fetchCount } from './counterAPI';
 import { Contract } from 'starknet';
 import contractAbi from './cairo1_abi.json';
@@ -29,13 +29,13 @@ export const fetchBalance = createAsyncThunk<
   AsyncThunkConfig
 >('counter/fetchBalance', async (_, thunkAPI) => {
   console.log('fetching');
-  const { provider, address } = thunkAPI.getState().wallet;
+  const { provider } = thunkAPI.getState().wallet;
 
   let contract = null;
 
   if (provider) {
     // TODO: Get contract address by Network, currently localhost:
-    const contractAddress = "0x5c327f6a6fb8c0b3d4cc0e2972da3cd9397b7d5322b37446862654170b8825b";
+    const contractAddress = "0x5ed60a9571c1325b24221a1134ab6ecc957c4f6f4206d1af1bccf3cbc31283f";
 
     if (contractAddress !== undefined) {
       // const signer = provider.signer;

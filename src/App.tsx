@@ -8,7 +8,7 @@ import {
   Grid,
   Typography,
 } from '@mui/material';
-import { Wallet, Footer } from './features/wallet/Wallet';
+import { WalletStatus, Footer } from './features/wallet/Wallet';
 import theme from './styles/theme';
 import { Counter } from './features/counter/Counter';
 
@@ -26,10 +26,10 @@ function App() {
             </Typography>
           </Grid>
           <Grid item xs={12}>
-            <Wallet />
+            <Counter />
           </Grid>
           <Grid item xs={12}>
-            <Counter />
+            <WalletStatus />
           </Grid>
           <Grid item xs={12}>
             <Footer />
