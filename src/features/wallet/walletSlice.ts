@@ -177,7 +177,7 @@ export const fetchAccount = createAsyncThunk<
 });
 
 export const disconnect = createAsyncThunk<
-  { provider: null; status: WalletStatusEnums },
+  { provider: null; address: string; chainId: string; status: WalletStatusEnums },
   void,
   AsyncThunkConfig
 >('Disconnect', async (_, thunkAPI) => {
@@ -186,6 +186,7 @@ export const disconnect = createAsyncThunk<
   return {
     provider: null,
     address: '',
+    chainId: '',
     status: WalletStatusEnums.DISCONNECTED,
   };
 });
@@ -248,6 +249,7 @@ export const walletSlice = createSlice({
       })
       .addCase(disconnect.fulfilled, (state, { payload }) => {
         state.provider = payload.provider;
+        state.chainId = payload.chainId;
         state.status = payload.status;
       });
   },

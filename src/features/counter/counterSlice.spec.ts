@@ -4,12 +4,13 @@ import counterReducer, {
 
 describe('counter reducer', () => {
   const initialState: CounterState = {
-    value: 3,
+    balance: 3,
+    contract: null,
     status: 'idle',
   };
   it('should handle initial state', () => {
     expect(counterReducer(undefined, { type: 'unknown' })).toEqual({
-      value: 0,
+      balance: 0,
       status: 'idle',
     });
   });

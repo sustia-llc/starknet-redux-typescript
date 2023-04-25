@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import {
-  incrementAsync,
+  increment,
   selectCount,
 } from './counterSlice';
-import styles from './Counter.module.css';
 import { WalletStatusEnums, selectWallet } from '../wallet/walletSlice';
+import { Box, Button, TextField, Typography } from '@mui/material';
 
 export function Counter() {
   const count = useAppSelector(selectCount);
@@ -14,28 +14,30 @@ export function Counter() {
   const dispatch = useAppDispatch();
   const [incrementAmount, setIncrementAmount] = useState('2');
 
-  const incrementValue = Number(incrementAmount) || 0;
+  const handleIncrement = () => {
+    const amount = parseInt(incrementAmount, 10);
+    if (!isNaN(amount)) {
+      dispatch(increment({ amount }));
+    }
+  };
+
   if (status === WalletStatusEnums.CONNECTED) {
     return (
-      <div>
-        <div className={styles.row}>
-          Current Count: {count}
-        </div>
-        <div className={styles.row}>
-          <input
-            className={styles.textbox}
-            aria-label="Set increment amount"
-            value={incrementAmount}
-            onChange={(e) => setIncrementAmount(e.target.value)}
-          />
-          <button
-            className={styles.asyncButton}
-            onClick={() => dispatch(incrementAsync(incrementValue))}
-          >
-            Add
-          </button>
-        </div>
-      </div>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <Typography variant="h5" component="div" sx={{ marginBottom: 1 }}>
+        Current Count: {count}
+      </Typography>
+      <TextField
+        label="Increment Amount"
+        value={incrementAmount}
+        onChange={(e) => setIncrementAmount(e.target.value)}
+        type="number"
+        sx={{ marginBottom: 1 }}
+      />
+      <Button variant="contained" color="primary" onClick={handleIncrement}>
+        Increment
+      </Button>
+    </Box>
     );
   } else {
     return (

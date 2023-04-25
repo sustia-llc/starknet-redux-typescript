@@ -1,119 +1,70 @@
 import React from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { connect, disconnect, selectWallet,  WalletStatusEnums } from './walletSlice';
-import { Alert, AlertTitle, Button, Grid, Typography } from '@mui/material';
+import { Alert, AlertTitle, AppBar, Toolbar, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
-function WalletStatus() {
-  const { provider, status } = useAppSelector(selectWallet);
+function Header() {
+  const { provider, address, chainId, status } = useAppSelector(selectWallet);
   const dispatch = useAppDispatch();
+  const connected = status === WalletStatusEnums.CONNECTED;
 
-  let display;
-  console.log("provider", provider);
-  if (provider === null) {
-    display = (
-      <div>
-        {(status === WalletStatusEnums.NOT_FOUND) &&
-          <Grid container>
-            <Alert severity="error">
-              <AlertTitle>Wallet Not Found</AlertTitle>
-              <p>
-                Please install and enable either the Argent X or Braavos wallet to use this app.
-              </p>
-            </Alert>
-          </Grid>
-        }
-      </div>
-    );
-  }
+  const handleButtonClick = () => {
+    if (connected) {
+      dispatch(disconnect());
+    } else {
+      dispatch(connect());
+    }
+  };
 
-  if (status === WalletStatusEnums.WRONG_NETWORK) {
-    display = (
-      <Grid container>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
+  return (
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Starknet PoC
+          </Typography>
+          <Typography variant="body1" component="span" sx={{ marginRight: 2 }}>
+            {chainId}
+          </Typography>
+          <Typography variant="body1" component="span" sx={{ marginRight: 2 }}>
+            {connected ? address.slice(0, 6) + "..." + address.slice(-4) : ""}
+          </Typography>
+          <LoadingButton
+            loading={status === WalletStatusEnums.LOADING}
+            variant="contained"
+            color={connected ? "secondary" : "primary"}
+            onClick={handleButtonClick}
+          >
+            {connected ? "Disconnect" : "Connect"}
+          </LoadingButton>
+        </Toolbar>
+      </AppBar>
+      {status === WalletStatusEnums.NOT_FOUND && (
+        <Alert severity="error" sx={{ marginBottom: 1 }}>
+          <AlertTitle>Wallet Not Found</AlertTitle>
+          <p>
+            Please install and enable either the Argent X or Braavos wallet to use this app.
+          </p>
+        </Alert>
+      )}
+      {status === WalletStatusEnums.WRONG_NETWORK && (
+        <Alert severity="warning" sx={{ marginBottom: 1 }}>
+          <AlertTitle>Connected to the Wrong network</AlertTitle>
           Contract not deployed to this network (chainId {provider.chainId})
           <br />
           <br />
           Please switch to either:
           <ol>
             <li>
-              localhost with chainId: FIXME (make sure the hardhat node is
-              running)
+              localhost
             </li>
             <li>Starknet testnet network</li>
           </ol>
         </Alert>
-      </Grid>
-    );
-  }
-
-  return <div>{display}</div>;
-}
-
-function Footer() {
-  const { address, chainId, status } = useAppSelector(selectWallet);
-  const dispatch = useAppDispatch();
-
-  <LoadingButton
-  loading={status === WalletStatusEnums.LOADING}
-  variant="contained"
-  onClick={() => dispatch(connect())}
->
-  Connect
-</LoadingButton>
-
-  const connected = status === WalletStatusEnums.CONNECTED;
-  return (
-    <Typography
-      component={'div'}
-      variant="body2"
-      color="text.secondary"
-      align="center"
-      gutterBottom
-    >
-      <Grid container
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-            rowSpacing={1} columnSpacing={3}>
-        {!connected && (
-          <Grid item xs={5}>
-            <LoadingButton
-              loading={status === WalletStatusEnums.LOADING}
-              variant="contained"
-              onClick={() => dispatch(connect())}
-            >
-              Connect
-            </LoadingButton>
-          </Grid>
-        )}
-        {connected && (
-          <Grid item xs={5}>
-            <Button
-              variant="contained"
-              onClick={() => dispatch(disconnect())}
-            >
-              Disconnect
-            </Button>
-          </Grid>
-        )}
-        <Grid item xs={12}>
-          Status: {WalletStatusEnums[status]}
-        </Grid>
-        {connected && (
-          <Grid>
-            <Grid item xs={12}>
-              Address: {address.slice(0, 6) + "..." + address.slice(-4)}
-            </Grid>
-            <Grid item xs={12}>
-              Chain: {chainId}
-            </Grid>
-          </Grid>
-        )}
-      </Grid>
-    </Typography>
+      )}
+    </>
   );
 }
 
-export { WalletStatus, Footer }
+export { Header }
