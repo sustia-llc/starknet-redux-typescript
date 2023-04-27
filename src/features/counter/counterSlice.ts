@@ -37,8 +37,8 @@ export const fetchBalance = createAsyncThunk<
   let balance = 0;
 
   if (provider) {
-    // TODO: Get contract address by Network, currently localhost
-    const contractAddress = "0x51ed4fb58bccd13e9bc1229e5a740892480584fc3c07405b09d54df63d81baf";
+    // TODO: Get contract address by Network, currently alpha goerli
+    const contractAddress = "0x028ce960c0662945668e53f96b122ac9a2a5cdf88c03d20a785dc1c8b8329f5e";
 
     if (contractAddress !== undefined) {
       contract = new Contract(
@@ -49,7 +49,8 @@ export const fetchBalance = createAsyncThunk<
       console.log('Contract:', contract);
 
       try {
-        const contractBalance = await contract.functions.get_balance();
+        const contractBalance = await contract.call("get_balance");
+        console.log(contractBalance);
         balance = Number(contractBalance);
       } catch (error) {
         console.log('Error fetching balance:', error);
@@ -93,8 +94,12 @@ export const increment = createAsyncThunk<
         starknetWindowObject = starknetWindowObject as any;
         let account = starknetWindowObject?.account;
         contract.connect(account);
-        contract.invoke("increase_balance",[amount]);
-        balance += 10;
+        const res = await contract.invoke("increase_balance",[amount]);
+        console.log("Transaction hash: " + res.transaction_hash);
+        await provider.waitForTransaction(res.transaction_hash);
+        const contractBalance = await contract.call("get_balance");
+        console.log(contractBalance);
+        balance = Number(contractBalance);
       } catch (error) {
         console.log('Error fetching balance:', error);
         throw error;
@@ -124,7 +129,7 @@ export const counterSlice = createSlice({
       })
       .addCase(increment.fulfilled, (state, action) => {
         state.status = 'idle';
-        state.balance += action.payload.balance;
+        state.balance = action.payload.balance;
       })
       .addCase(increment.rejected, (state) => {
         state.status = 'failed';
