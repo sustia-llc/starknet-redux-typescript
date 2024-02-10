@@ -200,9 +200,7 @@ export const fetchBalance = createAppAsyncThunk(
 
       try {
         const contractBalanceResult = await contract.call("get_balance");
-        console.log(contractBalanceResult.valueOf());
         balance = BigInt(contractBalanceResult.valueOf() as bigint).toString();
-        console.log('Balance:', balance);
       } catch (error) {
         console.log('Error fetching balance:', error);
         throw error;
@@ -251,7 +249,6 @@ export const walletSlice = createSlice({
       .addCase(fetchAccount.fulfilled, (state, { payload }) => {
         state.address = payload.address;
         state.chainId = payload.chainId;
-        // state.balance = payload.balance;
         state.status = payload.status;
       })
       .addCase(fetchAccount.rejected, (state, { payload }) => {
